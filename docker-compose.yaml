@@ -1,0 +1,51 @@
+version: "3.8"
+services:
+  web_server:
+    build:
+      context: .
+      dockerfile: dockerfiles/nginx.dockerfile
+    container_name: laravel-inventory-web-server
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./:/var/www/html
+    networks:
+      - laravel-inventory
+  php:
+    build: 
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+    user: "1000:1000"
+    ports:
+      - "3000:9000"
+    volumes:
+      - ./:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/conf.d/php.ini
+    networks:
+      - laravel-inventory
+    container_name: laravel-inventory-php
+  artisan:
+    build: 
+      context: ./dockerfiles
+      dockerfile: php.dockerfile
+    user: "1000:1000"
+    volumes:
+      - "./:/var/www/html:delegated"
+    entrypoint: ["php", "/var/www/html/artisan"]
+    networks:
+      - laravel-inventory
+  composer:
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.dockerfile
+    volumes:
+      - "./:/var/www/html"
+    networks:
+      - laravel-inventory
+networks:
+  laravel-inventory:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
